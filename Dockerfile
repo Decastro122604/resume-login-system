@@ -1,28 +1,30 @@
-# Use the official PHP 8.2 with Apache image
+# Use official PHP with Apache
 FROM php:8.2-apache
 
-# Install required PHP extensions for Laravel + PostgreSQL
+# Install required system dependencies and PostgreSQL extensions
 RUN apt-get update && apt-get install -y \
-    libpq-dev unzip git curl && \
-    docker-php-ext-install pdo pdo_pgsql pgsql
-
-# Enable Apache mod_rewrite for Laravel routing
-RUN a2enmod rewrite
+    git unzip libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy all project files into the container
+# Copy all project files
 COPY . .
 
-# Set permissions for Laravel storage and cache
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Install PHP dependencies (vendor folder)
+RUN composer install --no-dev --optimize-autoloader
+
+# Set correct permissions for Laravel
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Change Apache DocumentRoot to /var/www/html/public
+# Set Apache DocumentRoot to Laravel public folder
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+RUN a2enmod rewrite
 
-# Expose port 80
 EXPOSE 80
 
-# Start Apache in foreground
 CMD ["apache2-foreground"]
