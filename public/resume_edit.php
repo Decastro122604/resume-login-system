@@ -1,13 +1,13 @@
 <?php
 session_start();
 
-// Redirect if not logged in
+// ✅ Redirect if not logged in
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: login.php");
     exit;
 }
 
-// Connect to PostgreSQL
+// ✅ Connect to PostgreSQL
 $conn = pg_connect("host=localhost dbname=myresume user=postgres password=122604");
 if (!$conn) {
     die("Connection failed: " . pg_last_error());
@@ -16,33 +16,42 @@ if (!$conn) {
 $username = $_SESSION['username'] ?? '';
 $message = "";
 
-// Empty defaults
-$user = [
-    'fullname' => '',
-    'contact' => '',
-    'email' => '',
-    'linkedin' => '',
-    'profile_picture' => '',
-    'address' => '',
-    'education' => '',
-    'experience' => '',
-    'skills' => ''
-];
-
-// Fetch current user data
+// ✅ Check if user exists in database
 $fetch = pg_query_params($conn, "SELECT * FROM users WHERE username = $1", [$username]);
 if ($fetch && pg_num_rows($fetch) > 0) {
     $user = pg_fetch_assoc($fetch);
+} else {
+    // If user exists but no resume yet, create a blank record
+    $insert = pg_query_params($conn, "
+        INSERT INTO users (username, fullname, contact, email, linkedin, profile_picture, address, education, experience, skills)
+        VALUES ($1, '', '', '', '', '', '', '', '', '')
+    ", [$username]);
+    
+    if ($insert) {
+        $user = [
+            'fullname' => '',
+            'contact' => '',
+            'email' => '',
+            'linkedin' => '',
+            'profile_picture' => '',
+            'address' => '',
+            'education' => '',
+            'experience' => '',
+            'skills' => ''
+        ];
+    } else {
+        die("<p style='color:red;'>❌ Error creating new blank resume: " . pg_last_error($conn) . "</p>");
+    }
 }
 
-// Delete attachment if requested
+// ✅ Handle deleting attachments
 if (isset($_POST['delete_attachment'])) {
     $fileName = $_POST['delete_attachment'];
     pg_query_params($conn, "DELETE FROM attachments WHERE username=$1 AND file_name=$2", [$username, $fileName]);
     $message = "<p class='success'>🗑️ Attachment deleted successfully!</p>";
 }
 
-// Handle updates and uploads
+// ✅ Handle form updates and file uploads
 if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['delete_attachment'])) {
     $fullname = trim($_POST['fullname']);
     $contact = trim($_POST['contact']);
@@ -65,7 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['delete_attachment'])
         $address, $education, $experience, $skills, $username
     ]);
 
-    // Handle file uploads
+    // ✅ File uploads (same logic)
     if (!empty($_FILES['attachments']['name'][0])) {
         $uploadDir = __DIR__ . '/uploads/';
         if (!file_exists($uploadDir)) {
@@ -93,7 +102,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['delete_attachment'])
     }
 
     if ($res) {
-        $message = "<p class='success'>✅ Resume updated successfully!</p>";
+        $message = "<p class='success'>✅ Resume saved successfully!</p>";
         $fetch = pg_query_params($conn, "SELECT * FROM users WHERE username = $1", [$username]);
         $user = pg_fetch_assoc($fetch);
     } else {
@@ -101,7 +110,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['delete_attachment'])
     }
 }
 
-// Fetch existing attachments
+// ✅ Fetch existing attachments
 $attachments = pg_query_params($conn, "SELECT * FROM attachments WHERE username=$1", [$username]);
 
 pg_close($conn);

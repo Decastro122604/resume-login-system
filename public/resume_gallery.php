@@ -31,53 +31,30 @@ pg_close($conn);
         background-attachment: fixed;
         background-repeat: no-repeat;
         background-size: cover;
-        min-height: 100vh;
         margin: 0;
-        padding: 40px 20px;
+        padding: 40px 20px 80px 20px;
         display: flex;
         flex-direction: column;
         align-items: center;
         color: #333;
-        position: relative;
+        min-height: 100vh;
     }
 
     h1 {
         color: #d63384;
         font-weight: 700;
-        margin-bottom: 25px;
+        margin-bottom: 30px;
         text-shadow: 1px 1px rgba(255, 255, 255, 0.6);
+        text-align: center;
     }
 
-    /* Scrollable Gallery Container */
-    .gallery-wrapper {
-        position: relative;
+    /* Natural-scroll gallery layout */
+    .gallery-container {
         width: 100%;
         max-width: 900px;
-        height: 500px;
-        overflow-y: auto;
-        padding-right: 10px;
-        scroll-behavior: smooth;
-    }
-
-    /* Fading shadow at bottom */
-    .gallery-wrapper::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 70px;
-        background: linear-gradient(to top, rgba(255,255,255,0.8), rgba(255,255,255,0));
-        pointer-events: none;
-        border-bottom-left-radius: 20px;
-        border-bottom-right-radius: 20px;
-    }
-
-    .gallery-container {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 20px;
-        padding-bottom: 70px; /* space before fade */
+        gap: 25px;
     }
 
     .card {
@@ -99,6 +76,7 @@ pg_close($conn);
         font-weight: 600;
         color: #333;
         margin-bottom: 15px;
+        word-wrap: break-word;
     }
 
     .view-btn {
@@ -127,7 +105,7 @@ pg_close($conn);
     }
 
     .back-btn {
-        margin-top: 25px;
+        margin-top: 40px;
         background: linear-gradient(135deg, #e78bff, #ff8abf);
         color: white;
         padding: 12px 18px;
@@ -142,38 +120,22 @@ pg_close($conn);
         opacity: 0.9;
     }
 
-    /* Custom scrollbar for consistency */
-    .gallery-wrapper::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .gallery-wrapper::-webkit-scrollbar-thumb {
-        background: #ff8abf;
-        border-radius: 10px;
-    }
-
-    .gallery-wrapper::-webkit-scrollbar-thumb:hover {
-        background: #d63384;
-    }
-
 </style>
 </head>
 <body>
 
-    <h1>🎓 Resume Gallery</h1>
+    <h1>RESUME GALLERY</h1>
 
     <?php if ($users && count($users) > 0): ?>
-        <div class="gallery-wrapper">
-            <div class="gallery-container">
-                <?php foreach ($users as $user): ?>
-                    <div class="card">
-                        <div class="fullname"><?= htmlspecialchars($user['fullname'] ?: $user['username']) ?></div>
-                        <a class="view-btn" href="public_resume.php?username=<?= urlencode($user['username']) ?>" target="_blank">
-                            View Resume
-                        </a>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+        <div class="gallery-container">
+            <?php foreach ($users as $user): ?>
+                <div class="card">
+                    <div class="fullname"><?= htmlspecialchars($user['fullname'] ?: $user['username']) ?></div>
+                    <a class="view-btn" href="public_resume.php?username=<?= urlencode($user['username']) ?>" target="_blank">
+                        View Resume
+                    </a>
+                </div>
+            <?php endforeach; ?>
         </div>
     <?php else: ?>
         <p class="no-resume">No public resumes available yet.</p>

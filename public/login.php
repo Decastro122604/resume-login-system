@@ -26,6 +26,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (pg_num_rows($result) > 0) {
             $_SESSION['loggedin'] = true;
             $_SESSION['username'] = $username;
+
+            // ✅ Check if user has a resume
+            $checkResume = pg_query_params($conn, 
+                "SELECT * FROM users WHERE username = $1 AND (fullname IS NOT NULL OR email IS NOT NULL)", 
+                [$username]
+            );
+
+            // ✅ If no resume data yet, initialize blank resume fields
+            if (pg_num_rows($checkResume) === 0) {
+                pg_query_params($conn, 
+                    "UPDATE users SET fullname='', contact='', email='', linkedin='', profile_picture='', 
+                    address='', education='', experience='', skills='' WHERE username=$1", 
+                    [$username]
+                );
+            }
+
             $message = "<p class='success'>Login Successful. Redirecting...</p>";
             header("refresh:2;url=resume_edit.php");
         } else {
@@ -33,8 +49,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
 }
-?>
 
+// ✅ Safe variable for current username (prevents undefined warnings)
+$currentUser = $_SESSION['username'] ?? 'admin';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -133,8 +151,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <?= $message ?>
 
-    <!-- View Public Resume Button -->
-    <a class="public-btn" href="public_resume.php?username=admin" target="_blank">View Public Resume</a>
+    <!-- View Public Resume Buttons -->
+    <a class="public-btn" href="resume_gallery.php" target="_blank">View All Public Resumes</a>
+    <a class="public-btn" href="public_resume.php?username=<?= urlencode($currentUser) ?>" target="_blank">View My Resume</a>
+
   </div>
 </body>
 </html>
